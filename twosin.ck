@@ -1,5 +1,5 @@
 SinOsc s1 => Gain mix => JCRev rev => dac;
-SawOsc s2 => mix;
+SinOsc s2 => mix;
 SinOsc s3 => mix;
 SinOsc s4 => mix;
 SinOsc s5 => mix;
