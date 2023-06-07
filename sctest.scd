@@ -120,6 +120,8 @@ r.play
 }.scope
 )
 { SinOsc.ar(440, 0, 0.571) * SinOsc.kr(880) }.scope
+{ Saw.ar(500,1.0,0) * WhiteNoise.kr(0.5).abs }.scope
+{ SinOsc.ar(440, 0, 0.571) * SinOsc.kr(880).abs }.scope
 
 // use an lfo to modulate the amplitude of the modulator
 (
@@ -132,3 +134,79 @@ r.play
         )
     }.scope
 )
+
+(
+SynthDef("noisy",{arg out;
+	Out.ar(
+		out,
+		LPF.ar(
+			Saw.ar(500,1.0,0) * WhiteNoise.kr(0.5).abs,
+			EnvGen.kr(Env.adsr(0.1,0.3,1,1.0,1,-4,0))
+		)
+	)
+}).add;
+)
+Synth("noisy")
+
+(
+SynthDef("noiseToPitch", { arg out = 0, mul = 1;
+    Out.ar(
+        out,
+        Resonz.ar(
+            WhiteNoise.ar(mul),
+            LFNoise0.kr(4, 110, 660),
+            [0.005, 0.005]
+        )
+    )
+}).add;
+)
+
+(
+// activate left and right channels
+Synth("noiseToPitch", [\out, 0, \mul, 1]);
+Synth("noiseToPitch", [\out, 1, \mul, 1]);
+)
+
+{ Formlet.ar(Saw.ar(22), 400, 0.01, 0.11, 0.022) }.scope
+{Formlet.ar(Formant.ar(440,1760,880,1,0),660,5,0.5,1,0)}.play
+
+(
+{
+    CombN.ar(
+        SinOsc.ar(500.rrand(1000), 0, 0.2) * Line.kr(1, 0, 0.1),
+        0.3,
+        0.025,
+        6
+    )
+}.scope;
+)
+(
+{
+    AllpassN.ar(
+        SinOsc.ar(500.rrand(1000), 0, 0.2) * Line.kr(1, 0, 0.1),
+        0.3,
+        0.25,
+        6
+    )
+}.scope;
+)
+
+(
+{
+var s, z, y;
+    // 10 voices of a random sine percussion sound :
+s = Mix.ar(Array.fill(10, { Resonz.ar(Dust.ar(0.2, 50), 200 + 3000.0.rand, 0.003)}) );
+    // reverb predelay time :
+z = DelayN.ar(s, 0.048);
+    // 7 length modulated comb delays in parallel :
+y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 15) }));
+    // two parallel chains of 4 allpass delays (8 total) :
+4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
+    // add original sound to reverb and play it :
+s+(0.2*y)
+}.scope
+)
+
+{Mix.fill(10,Resonz.ar(Dust.ar(0.2,50,0),440,1))}.play
+Delay
+
